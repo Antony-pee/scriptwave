@@ -9,6 +9,21 @@ export default function ResetPasswordPage() {
     const [success, setSuccess] = useState(false)
     const [loading, setLoading] = useState(false)
 
+    // Establish recovery session when the user clicks the email link
+    useEffect(() => {
+        const handlePasswordRecovery = async () => {
+            const { data } = await supabase.auth.onAuthStateChange(async (event) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    // Recovery session is active
+                }
+            })
+            return () => {
+                data.subscription.unsubscribe()
+            }
+        }
+        handlePasswordRecovery()
+    }, [])
+
     async function handleReset(e: React.FormEvent) {
         e.preventDefault()
         setErrorMsg('')
