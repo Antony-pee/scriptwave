@@ -4,7 +4,7 @@ import { supabase } from '@/utils/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function AuthPage() {
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [view, setView] = useState<'signin' | 'signup' | 'forgot'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -18,23 +18,21 @@ export default function AuthPage() {
     setMessage('')
     setErrorMsg('')
 
-    if (isSignUp) {
-      // Sign Up with Email and Password (triggers Supabase email verification link)
+    if (view === 'signup') {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/verified`,
         },
       })
 
       if (error) {
         setErrorMsg(error.message)
       } else {
-        setMessage('Verification link sent! Please check your email inbox to verify your account before logging in.')
+        setMessage('Verification link sent! Please check your email inbox to verify your account.')
       }
-    } else {
-      // Sign In with Email and Password
+    } else if (view === 'signin') {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -43,12 +41,21 @@ export default function AuthPage() {
       if (error) {
         setErrorMsg(error.message)
       } else {
-        // Admin routing check
         if (email.trim().toLowerCase() === 'antony_pee.exe@Tenthra.none'.toLowerCase()) {
           router.push('/admin/dashboard')
         } else {
           router.push('/dashboard')
         }
+      }
+    } else if (view === 'forgot') {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+
+      if (error) {
+        setErrorMsg(error.message)
+      } else {
+        setMessage('Password reset link sent! Check your email to reset your password.')
       }
     }
     setLoading(false)
@@ -62,7 +69,9 @@ export default function AuthPage() {
               Scriptwave.tech
             </h1>
             <p className="text-gray-400 text-sm mt-2">
-              {isSignUp ? 'Create your new account' : 'Sign in to access your dashboard'}
+              {view === 'signup' && 'Create your new account'}
+              {view === 'signin' && 'Sign in to access your dashboard'}
+              {view === 'forgot' && 'Reset your account password'}
             </p>
           </div>
 
@@ -91,34 +100,64 @@ export default function AuthPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Password</label>
-              <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-gray-900 border border-gray-800 p-3 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm"
-              />
-            </div>
+            {view !== 'forgot' && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Password</label>
+                  <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      className="w-full bg-gray-900 border border-gray-800 p-3 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm"
+                  />
+                </div>
+            )}
 
             <button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/30 text-sm"
             >
-              {loading ? 'Processing...' : isSignUp ? 'Create Account & Send Verification' : 'Sign In'}
+              {loading ? 'Processing...' : view === 'signup' ? 'Create Account & Send Verification' : view === 'signin' ? 'Sign In' : 'Send Reset Instructions'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
-                onClick={() => { setIsSignUp(!isSignUp); setMessage(''); setErrorMsg(''); }}
-                className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition"
-            >
-              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
-            </button>
+          <div className="mt-6 flex flex-col items-center space-y-2 text-sm">
+            {view === 'signin' && (
+                <>
+                  <button
+                      onClick={() => { setView('forgot'); setMessage(''); setErrorMsg(''); }}
+                      className="text-gray-400 hover:text-gray-300 transition"
+                  >
+                    Forgot your password?
+                  </button>
+                  <button
+                      onClick={() => { setView('signup'); setMessage(''); setErrorMsg(''); }}
+                      className="text-indigo-400 hover:text-indigo-300 font-medium transition"
+                  >
+                    Don't have an account? Create one
+                  </button>
+                </>
+            )}
+
+            {view === 'signup' && (
+                <button
+                    onClick={() => { setView('signin'); setMessage(''); setErrorMsg(''); }}
+                    className="text-indigo-400 hover:text-indigo-300 font-medium transition"
+                >
+                  Already have an account? Sign In
+                </button>
+            )}
+
+            {view === 'forgot' && (
+                <button
+                    onClick={() => { setView('signin'); setMessage(''); setErrorMsg(''); }}
+                    className="text-indigo-400 hover:text-indigo-300 font-medium transition"
+                >
+                  Back to Sign In
+                </button>
+            )}
           </div>
         </div>
       </div>
