@@ -11,7 +11,7 @@ interface CartItem {
         id: string
         title: string
         price: number
-    }
+    } | null
 }
 
 export default function CartPage() {
@@ -45,7 +45,13 @@ export default function CartPage() {
             if (error) {
                 console.error('Error fetching cart:', error.message)
             } else {
-                setCartItems(data || [])
+                // Map data safely handling Supabase relation arrays if returned as an array
+                const formattedItems: CartItem[] = (data || []).map((item: any) => ({
+                    id: item.id,
+                    quantity: item.quantity,
+                    products: Array.isArray(item.products) ? item.products[0] || null : item.products
+                }))
+                setCartItems(formattedItems)
             }
             setLoading(false)
         }
@@ -62,7 +68,7 @@ export default function CartPage() {
 
         const orderNumber = 'SW-' + Math.floor(100000 + Math.random() * 900000)
         const shippingAddress = { street, city, state, country, postalCode }
-        const deviceSummary = cartItems.map(item => `${item.quantity}x ${item.products?.title}`).join(', ')
+        const deviceSummary = cartItems.map(item => `${item.quantity}x ${item.products?.title || 'Item'}`).join(', ')
 
         const { error } = await supabase.from('orders').insert({
             order_number: orderNumber,
@@ -79,7 +85,6 @@ export default function CartPage() {
             alert('Checkout error: ' + error.message)
         } else {
             alert(`Order placed successfully! Your Order Number is ${orderNumber}`)
-            // Clear cart items
             await supabase.from('cart_items').delete().eq('user_id', user.id)
             setCartItems([])
             router.push('/dashboard')
@@ -96,7 +101,6 @@ export default function CartPage() {
                         <a href="/dashboard" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Dashboard</a>
                         <a href="/devices" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Devices Available</a>
                         <a href="/cart" className="block py-2 px-4 rounded bg-indigo-600 font-semibold">Cart & Checkout</a>
-                        <a href="/track" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Track Order</a>
                         <a href="/lounge" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Community Lounge</a>
                         <a href="/faq" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">FAQ</a>
                     </nav>
@@ -128,10 +132,10 @@ export default function CartPage() {
                             {cartItems.map((item) => (
                                 <div key={item.id} className="flex justify-between items-center border-b border-gray-700 pb-3">
                                     <div>
-                                        <h4 className="font-medium text-white">{item.products?.title}</h4>
+                                        <h4 className="font-medium text-white">{item.products?.title || 'Product'}</h4>
                                         <p className="text-sm text-gray-400">Qty: {item.quantity}</p>
                                     </div>
-                                    <div className="font-bold text-indigo-400">${(item.products?.price * item.quantity).toFixed(2)}</div>
+                                    <div className="font-bold text-indigo-400">${((item.products?.price || 0) * item.quantity).toFixed(2)}</div>
                                 </div>
                             ))}
                             <div className="pt-4 space-y-2 text-sm">
