@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '../supabaseClient'
+import { supabase } from '@/utils/supabase'
 import { useRouter } from 'next/navigation'
 
 interface CartItem {
@@ -22,7 +22,7 @@ export default function CartPage() {
     const [state, setState] = useState('')
     const [country, setCountry] = useState('')
     const [postalCode, setPostalCode] = useState('')
-    const [shippingFee, setShippingFee] = useState(30) // Base fee example
+    const [shippingFee, setShippingFee] = useState(30)
     const router = useRouter()
 
     useEffect(() => {
@@ -36,10 +36,10 @@ export default function CartPage() {
             const { data, error } = await supabase
                 .from('cart_items')
                 .select(`
-          id,
-          quantity,
-          products ( id, title, price )
-        `)
+                    id,
+                    quantity,
+                    products ( id, title, price )
+                `)
                 .eq('user_id', user.id)
 
             if (error) {
@@ -62,10 +62,13 @@ export default function CartPage() {
 
         const orderNumber = 'SW-' + Math.floor(100000 + Math.random() * 900000)
         const shippingAddress = { street, city, state, country, postalCode }
+        const deviceSummary = cartItems.map(item => `${item.quantity}x ${item.products?.title}`).join(', ')
 
         const { error } = await supabase.from('orders').insert({
             order_number: orderNumber,
             user_id: user.id,
+            customer_email: user.email,
+            device_name: deviceSummary || 'Scriptwave Hardware Bundle',
             total_amount: totalAmount,
             shipping_fee: shippingFee,
             shipping_address: shippingAddress,
@@ -93,6 +96,7 @@ export default function CartPage() {
                         <a href="/dashboard" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Dashboard</a>
                         <a href="/devices" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Devices Available</a>
                         <a href="/cart" className="block py-2 px-4 rounded bg-indigo-600 font-semibold">Cart & Checkout</a>
+                        <a href="/track" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Track Order</a>
                         <a href="/lounge" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">Community Lounge</a>
                         <a href="/faq" className="block py-2 px-4 rounded hover:bg-gray-700 text-gray-300">FAQ</a>
                     </nav>
@@ -132,7 +136,7 @@ export default function CartPage() {
                             ))}
                             <div className="pt-4 space-y-2 text-sm">
                                 <div className="flex justify-between text-gray-300"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-                                <div className="flex justify-between text-gray-300"><span>Shipping Fee (Distance-based)</span><span>${shippingFee.toFixed(2)}</span></div>
+                                <div className="flex justify-between text-gray-300"><span>Shipping Fee</span><span>${shippingFee.toFixed(2)}</span></div>
                                 <div className="flex justify-between text-lg font-bold text-white pt-2 border-t border-gray-700"><span>Total</span><span>${totalAmount.toFixed(2)}</span></div>
                             </div>
                         </div>

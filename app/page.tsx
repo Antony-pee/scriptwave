@@ -1,112 +1,126 @@
-import Link from 'next/link';
-import Image from 'next/image';
+'use client'
+import { useState } from 'react'
+import { supabase } from '@/utils/supabase'
+import { useRouter } from 'next/navigation'
 
-export default function LandingPage() {
+export default function AuthPage() {
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  async function handleAuth(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
+    setErrorMsg('')
+
+    if (isSignUp) {
+      // Sign Up with Email and Password (triggers Supabase email verification link)
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      })
+
+      if (error) {
+        setErrorMsg(error.message)
+      } else {
+        setMessage('Verification link sent! Please check your email inbox to verify your account before logging in.')
+      }
+    } else {
+      // Sign In with Email and Password
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        setErrorMsg(error.message)
+      } else {
+        // Admin routing check
+        if (email.trim().toLowerCase() === 'antony_pee.exe@Tenthra.none'.toLowerCase()) {
+          router.push('/admin/dashboard')
+        } else {
+          router.push('/dashboard')
+        }
+      }
+    }
+    setLoading(false)
+  }
+
   return (
-      <div className="min-h-screen relative flex flex-col justify-between bg-[#050a14] text-white overflow-hidden">
+      <div className="min-h-screen bg-[#050a14] text-white flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full bg-gray-950 border border-indigo-500/30 p-8 rounded-3xl shadow-2xl backdrop-blur-xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-black bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
+              Scriptwave.tech
+            </h1>
+            <p className="text-gray-400 text-sm mt-2">
+              {isSignUp ? 'Create your new account' : 'Sign in to access your dashboard'}
+            </p>
+          </div>
 
-        {/* Background Pixel Art Atmosphere & Overlay */}
-        <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed z-0 opacity-40 pointer-events-none"
-            style={{ backgroundImage: "url('/dashboard-bg.png')" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050a14]/60 via-[#050a14]/80 to-[#050a14] z-0 pointer-events-none" />
+          {errorMsg && (
+              <div className="mb-4 bg-red-950/40 border border-red-900/50 p-3 rounded-xl text-red-300 text-sm">
+                {errorMsg}
+              </div>
+          )}
 
-        {/* Navigation Header */}
-        <header className="relative z-10 max-w-7xl w-full mx-auto p-6 md:px-10 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-indigo-500/30 bg-gray-950 shadow-lg shadow-indigo-950/50">
-              <Image
-                  src="/logo.png"
-                  alt="Scriptwave Logo"
-                  fill
-                  className="object-contain p-1"
+          {message && (
+              <div className="mb-4 bg-emerald-950/40 border border-emerald-900/50 p-3 rounded-xl text-emerald-300 text-sm">
+                {message}
+              </div>
+          )}
+
+          <form onSubmit={handleAuth} className="space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Email Address</label>
+              <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  className="w-full bg-gray-900 border border-gray-800 p-3 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm"
               />
             </div>
-            <span className="text-xl font-black tracking-wider bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
-            SCRIPTWAVE
-          </span>
-          </div>
 
-          <div className="flex items-center space-x-4">
-            <Link
-                href="/dashboard"
-                className="text-sm font-medium text-gray-300 hover:text-white transition px-4 py-2 rounded-lg hover:bg-gray-900/60"
-            >
-              Dashboard
-            </Link>
-            <Link
-                href="/devices"
-                className="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl transition shadow-lg shadow-indigo-600/30"
-            >
-              Explore Store
-            </Link>
-          </div>
-        </header>
-
-        {/* Hero Section */}
-        <main className="relative z-10 max-w-5xl mx-auto px-6 py-20 text-center flex flex-col items-center my-auto">
-
-          {/* Logo Centerpiece */}
-          <div className="relative w-32 h-32 md:w-40 md:h-40 mb-8 rounded-3xl p-3 bg-gradient-to-b from-indigo-950/80 to-gray-950/90 border border-indigo-500/30 shadow-2xl shadow-indigo-900/40 backdrop-blur-xl group transition transform hover:scale-105 duration-300">
-            <Image
-                src="/logo.png"
-                alt="Scriptwave Logo"
-                fill
-                className="object-contain p-4 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-                priority
-            />
-          </div>
-
-          {/* Brand Title */}
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4 bg-gradient-to-r from-white via-indigo-100 to-indigo-400 bg-clip-text text-transparent">
-            Scriptwave
-          </h1>
-
-          {/* Tagline */}
-          <p className="text-lg md:text-2xl font-medium text-indigo-200/90 max-w-2xl mb-10 tracking-wide">
-            Premium used, new and refurbished devices
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md">
-            <Link
-                href="/devices"
-                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3.5 rounded-2xl transition shadow-xl shadow-indigo-600/30 border border-indigo-400/30 text-center"
-            >
-              Browse Inventory
-            </Link>
-            <Link
-                href="/dashboard"
-                className="w-full sm:w-auto bg-gray-900/80 hover:bg-gray-800 text-gray-200 font-semibold px-8 py-3.5 rounded-2xl transition border border-gray-800 backdrop-blur text-center"
-            >
-              Open Dashboard
-            </Link>
-          </div>
-
-          {/* Value Props / Highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-20 w-full text-left">
-            <div className="bg-gray-950/50 backdrop-blur-md p-5 rounded-2xl border border-gray-800/80 shadow-lg">
-              <div className="text-indigo-400 font-bold text-lg mb-1">⚡ Certified New</div>
-              <p className="text-gray-400 text-sm">Top-tier cutting-edge hardware straight from manufacturers.</p>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Password</label>
+              <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full bg-gray-900 border border-gray-800 p-3 rounded-xl text-white focus:outline-none focus:border-indigo-500 text-sm"
+              />
             </div>
-            <div className="bg-gray-950/50 backdrop-blur-md p-5 rounded-2xl border border-gray-800/80 shadow-lg">
-              <div className="text-indigo-400 font-bold text-lg mb-1">🛠️ Expert Refurbished</div>
-              <p className="text-gray-400 text-sm">Rigidly inspected and restored to peak operational performance.</p>
-            </div>
-            <div className="bg-gray-950/50 backdrop-blur-md p-5 rounded-2xl border border-gray-800/80 shadow-lg">
-              <div className="text-indigo-400 font-bold text-lg mb-1">💎 Premium Used</div>
-              <p className="text-gray-400 text-sm">Reliable, high-grade technology at exceptional value.</p>
-            </div>
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/30 text-sm"
+            >
+              {loading ? 'Processing...' : isSignUp ? 'Create Account & Send Verification' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+                onClick={() => { setIsSignUp(!isSignUp); setMessage(''); setErrorMsg(''); }}
+                className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition"
+            >
+              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
+            </button>
           </div>
-
-        </main>
-
-        {/* Footer */}
-        <footer className="relative z-10 max-w-7xl w-full mx-auto p-6 text-center text-xs text-gray-500 border-t border-gray-900">
-          © {new Date().getFullYear()} Scriptwave.tech. All rights reserved.
-        </footer>
-
+        </div>
       </div>
-  );
+  )
 }
