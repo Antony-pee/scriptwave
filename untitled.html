@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Name Wallpaper</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0b0e14;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #wallpaper-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #name-tag {
+            position: absolute;
+            font-size: 5rem;
+            font-weight: 800;
+            white-space: nowrap;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+            cursor: default;
+            user-select: none;
+            transition: color 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="wallpaper-container">
+        <div id="name-tag">YOUR NAME</div>
+    </div>
+
+    <script>
+        const nameTag = document.getElementById('name-tag');
+        const setName = (text) => {
+            nameTag.textContent = text || 'YOUR NAME';
+        };
+        setName('YOUR NAME');
+
+        let x = Math.random() * (window.innerWidth - nameTag.offsetWidth);
+        let y = Math.random() * (window.innerHeight - nameTag.offsetHeight);
+        let dx = 3;
+        let dy = 3;
+
+        function animate() {
+            x += dx;
+            y += dy;
+
+            const maxX = window.innerWidth - nameTag.offsetWidth;
+            const maxY = window.innerHeight - nameTag.offsetHeight;
+
+            if (x <= 0 || x >= maxX) {
+                dx = -dx;
+                changeColor();
+            }
+            if (y <= 0 || y >= maxY) {
+                dy = -dy;
+                changeColor();
+            }
+
+            x = Math.max(0, Math.min(x, maxX));
+            y = Math.max(0, Math.min(y, maxY));
+
+            nameTag.style.left = `${x}px`;
+            nameTag.style.top = `${y}px`;
+
+            requestAnimationFrame(animate);
+        }
+
+        function changeColor() {
+            const colors = ['#ff007f', '#00d4ff', '#00ffaa', '#ffcc00', '#9d00ff'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            nameTag.style.color = randomColor;
+            nameTag.style.textShadow = `0 0 30px ${randomColor}`;
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            const maxX = window.innerWidth - nameTag.offsetWidth;
+            const maxY = window.innerHeight - nameTag.offsetHeight;
+            x = Math.max(0, Math.min(x, maxX));
+            y = Math.max(0, Math.min(y, maxY));
+        });
+    </script>
+</body>
+</html>
